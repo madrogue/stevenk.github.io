@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Image capture test</title>
+</head>
+
+<body>
+    <p>
+        <span id="errorMsg"></span>
+    </p>
+    <div>
+        <h1>Browse/Capture</h1>
+        <div>
+            <input id="capture" type="file" capture="camera" accept="image/*" />
+        </div>
+        <div>
+            <img id="imageitem" src="empty.png" />
+        </div>
+    </div>
+    <div>
+        <h1>Webcam</h1>
+        <div>
+            <button id="enable"><span id="startstop">Start/Stop</span></button>
+        </div>
+
+        <!-- Stream video via webcam -->
+        <div class="video-wrap">
+            <video id="video" playsinline autoplay></video>
+        </div>
+
+        <!-- Trigger canvas web API -->
+        <div class="controller">
+            <button id="snap">Capture</button>
+        </div>
+
+        <!-- Webcam video snapshot -->
+        <canvas id="canvas" width="1280" height="720"></canvas>
+    </div>
+</body>
+<script>
+    'use strict';
+
+    const capture = document.getElementById('capture');
+    const imageitem = document.getElementById('imageitem');
+
+    const enable = document.getElementById('enable');
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const snap = document.getElementById("snap");
+    const errorMsgElement = document.querySelector('span#errorMsg');
+
+    const webcamConstraints = {
+        audio: false,
+        video: {
+            width: 1280, height: 720
+        }
+    };
+
+    function readURL(input) {
+        if (input.files &&
+            input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                //img element
+                imageitem.setAttribute('src', e.target.result);
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    // Success
+    function handleSuccess(stream) {
+        window.stream = stream;
+        video.srcObject = stream;
+    }
+
+    // Access webcam
+    async function init() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia(webcamConstraints);
+            handleSuccess(stream);
+        } catch (err) {
+            errorMsgElement.innerHTML = `navigator.getUserMedia error: ${err.toString()}`;
+        }
+    }
+
+    function onLoad() {
+        console.log('onLoad');
+
+        capture.addEventListener("change", function () {
+            // this is the file input
+            readURL(this);
+        });
+
+        enable.addEventListener("click", function () {
+            // Load init
+            init();
+        });
+
+        // Draw image
+        const context = canvas.getContext('2d');
+        snap.addEventListener("click", function () {
+            context.drawImage(video, 0, 0, webcamConstraints.video.width, webcamConstraints.video.height);
+        });
+    }
+
+    window.addEventListener('load', onLoad);
+</script>
+
+</html>
